@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ethanol or gas</string>
+    <string name="titulo">let\'s see how much bankrupt we\'ve got</string>
+    <string name="preco_do_alcool">ethanol price (£)</string>
+    <string name="nome_do_posto">gas station name</string>
+    <string name="preco_da_gasolina">gas price (£)</string>
+</resources>

@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">alcool ou gasolina</string>
+    <string name="titulo">calculando o rombo da semana</string>
+    <string name="preco_da_gasolina">Preço da gasolina (R$)</string>
+    <string name="preco_do_alcool">Preço do álcool (R$)</string>
+    <string name="nome_do_posto">Nome do posto</string>
+</resources>
