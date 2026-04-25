@@ -4,4 +4,17 @@
     <string name="preco_da_gasolina">Preço da gasolina (R$)</string>
     <string name="preco_do_alcool">Preço do álcool (R$)</string>
     <string name="nome_do_posto">Nome do posto</string>
+    <string name="posto_salvo_com_sucesso">Posto salvo com sucesso!</string>
+    <string name="historico_de_postos">Histórico de postos</string>
+    <string name="editando">"Editando: "</string>
+    <string name="removido">" removido"</string>
+    <string name="baseado_em">Cálculo baseado no rendimento de 75%</string>
+    <string name="gasolinaP">Gasolina: R$</string>
+    <string name="alcoolP">Álcool: R$</string>
+    <string name="preencha_todos_os_campos">Preencha todos os campos!</string>
+    <string name="use_gasolina">Abasteça com GASOLINA</string>
+    <string name="use_alcool">Abasteça com ÁLCOOL</string>
+    <string name="dados_insuficientes">Dados insuficientes</string>
+    <string name="excluir">Excluir</string>
+    <string name="adicionar">Adicionar posto</string>
 </resources>

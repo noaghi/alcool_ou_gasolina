@@ -5,4 +5,17 @@
     <string name="preco_do_alcool">ethanol price (£)</string>
     <string name="nome_do_posto">gas station name</string>
     <string name="preco_da_gasolina">gas price (£)</string>
+    <string name="posto_salvo_com_sucesso">gas station successfully saved</string>
+    <string name="historico_de_postos">gas stations history</string>
+    <string name="editando">"editing: "</string>
+    <string name="removido">" removed"</string>
+    <string name="baseado_em">calculation based on 75% performance</string>
+    <string name="gasolinaP">gas: £</string>
+    <string name="alcoolP">ethanol: £</string>
+    <string name="preencha_todos_os_campos">fill all fields!</string>
+    <string name="use_gasolina">fill with GAS</string>
+    <string name="use_alcool">fill with ETHANOL</string>
+    <string name="dados_insuficientes">not enough data</string>
+    <string name="excluir">delete</string>
+    <string name="adicionar">add gas station</string>
 </resources>
