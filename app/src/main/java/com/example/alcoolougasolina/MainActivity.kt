@@ -1,6 +1,8 @@
 package com.example.alcoolougasolina
 
-import android.content.Context
+import android.Manifest
+import android.app.Activity
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -12,11 +14,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -39,20 +43,26 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.alcoolougasolina.ui.theme.AlcoolOuGasolinaTheme
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.foundation.layout.height
-import androidx.compose.material.icons.filled.Add
+import android.location.Location
+import androidx.compose.runtime.toMutableStateList
+import androidx.core.app.ActivityCompat
+import androidx.core.content.edit
 
 class MainActivity : ComponentActivity() {
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         enableEdgeToEdge()
         setContent {
             AlcoolOuGasolinaTheme {
@@ -61,14 +71,16 @@ class MainActivity : ComponentActivity() {
 
                     val context = LocalContext.current
 
-                    val prefs = remember { context.getSharedPreferences("PostoPrefs", Context.MODE_PRIVATE) }
+                    val prefs = remember { context.getSharedPreferences("PostoPrefs", MODE_PRIVATE) }
                     val gson = Gson()
+                    val json = prefs.getString("lista_postos", "[]")
                     val tipo = object : TypeToken<MutableList<Posto>>() {}.type
 
                     var gasValue by rememberSaveable { mutableStateOf("") }
                     var alcValue by rememberSaveable { mutableStateOf("") }
                     var postoValue by rememberSaveable { mutableStateOf("") }
                     var is75Percent by rememberSaveable { mutableStateOf(prefs.getBoolean("usa_75", false)) }
+                    var dataIns by rememberSaveable { mutableStateOf("") }
 
                     val gas = context.getString(R.string.preco_da_gasolina)
                     val alc = context.getString(R.string.preco_do_alcool)
@@ -79,10 +91,8 @@ class MainActivity : ComponentActivity() {
                     val editando = context.getString(R.string.editando)
                     val removido = context.getString(R.string.removido)
 
-                    var listaDePostos by remember {
-                        val json = prefs.getString("lista_postos", "[]")
-                        mutableStateOf(Gson().fromJson<MutableList<Posto>>(json, tipo) ?: mutableListOf() )
-                    }
+                    val listaInicial = gson.fromJson<List<Posto>>(json, tipo) ?: listOf()
+                    val listaDePostos = remember { listaInicial.toMutableStateList() }
 
                     Column(
                         modifier = Modifier
@@ -96,34 +106,42 @@ class MainActivity : ComponentActivity() {
                         CampoDeTexto(posto, postoValue) { postoValue = it }
                         Switch75(is75Percent) { novoValor ->
                             is75Percent = novoValor
-                            prefs.edit().putBoolean("usa_75", novoValor).apply()
+                            prefs.edit { putBoolean("usa_75", novoValor) }
                         }
                         BotaoAddPosto {
-                            val jsonExistente = prefs.getString("lista_postos", "[]")
+                            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                                fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
+                                    val lat = location?.latitude ?: 0.0
+                                    val lon = location?.longitude ?: 0.0
 
-                            val listaAtual: MutableList<Posto> = gson.fromJson(jsonExistente, tipo) ?: mutableListOf()
+                                    val novoPosto = Posto(
+                                        nome = postoValue,
+                                        gasolina = gasValue,
+                                        alcool = alcValue,
+                                        usa75 = is75Percent,
+                                        dataIns = dataIns,
+                                        lat = lat,
+                                        lon = lon
+                                    )
 
-                            val novoPosto = Posto(
-                                nome = postoValue,
-                                gasolina = gasValue,
-                                alcool = alcValue,
-                                usa75 = is75Percent
-                            )
+                                    if (postoValue.isNotBlank() && gasValue.isNotBlank() && alcValue.isNotBlank()) {
+                                        listaDePostos.removeAll { it.nome == postoValue }
+                                        listaDePostos.add(novoPosto)
 
-                            if (postoValue.isNotBlank() && gasValue.isNotBlank() && alcValue.isNotBlank()) {
+                                        val novoJson = gson.toJson(listaDePostos.toList())
+                                        prefs.edit {putString("lista_postos", novoJson) }
 
-                            listaAtual.removeAll { it.nome == postoValue }
-                            listaAtual.add(novoPosto)
-                            val novoJson = gson.toJson(listaAtual)
-                            prefs.edit().putString("lista_postos", novoJson).apply()
+                                        Toast.makeText(context, pscs, Toast.LENGTH_SHORT).show()
 
-                            Toast.makeText(context, pscs, Toast.LENGTH_SHORT).show()
-
-                            postoValue = ""; gasValue = ""; alcValue = ""
-
-                            listaDePostos = listaAtual
+                                        postoValue = ""; gasValue = ""; alcValue = ""
+                                    } else {
+                                        Toast.makeText(context, ptoc, Toast.LENGTH_SHORT).show()
+                                    }
+                                }
                             } else {
-                                Toast.makeText(context, ptoc, Toast.LENGTH_SHORT).show()
+                                (context as? Activity)?.let {
+                                    ActivityCompat.requestPermissions(it, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1)
+                                }
                             }
                         }
                         Text(
@@ -144,24 +162,21 @@ class MainActivity : ComponentActivity() {
                                     Toast.makeText(context, editando + posto.nome, Toast.LENGTH_SHORT).show()
                                 },
                                 onDelete = {
-                                    val novaLista = listaDePostos.toMutableList()
-                                    novaLista.remove(posto)
+                                    listaDePostos.remove(posto)
 
-                                    listaDePostos = novaLista
-
-                                    val novoJson = gson.toJson(novaLista)
-                                    prefs.edit().putString("lista_postos", novoJson).apply()
+                                    val novoJson = gson.toJson(listaDePostos.toList())
+                                    prefs.edit { putString("lista_postos", novoJson) }
 
                                     Toast.makeText(context, posto.nome + removido, Toast.LENGTH_SHORT).show()
                                 }
                             )
-                            }
                         }
                     }
                 }
             }
         }
     }
+}
 
 @Composable
 fun Titulo() {
@@ -183,7 +198,7 @@ fun Titulo() {
 
 @Composable
 fun CampoDeNumero(nome: String, valor: String, onValueChange: (String) -> Unit) {
-    val decimalRegex = Regex("^\\d*[.,]?\\d*\$")
+    val decimalRegex = Regex("^\\d*[.,]?\\d*$")
     val maxLength = 4
 
     OutlinedTextField(
@@ -275,8 +290,8 @@ fun PostoCard(posto: Posto, onClick: () -> Unit, onDelete: () -> Unit) {
     val di = context.getString(R.string.dados_insuficientes)
     val excluir = context.getString(R.string.excluir)
 
-    val gasV = posto.gasolina.toDoubleOrNull() ?: 0.0
-    val alcV = posto.alcool.toDoubleOrNull() ?: 0.0
+    val gasV = posto.gasolina.toDouble()
+    val alcV = posto.alcool.toDouble()
     val resultado = if (gasV > 0) {
         val limite = if (posto.usa75) 0.75 else 0.70
         if ( alcV / gasV <= limite ) acc else acg
@@ -325,18 +340,26 @@ fun PostoCard(posto: Posto, onClick: () -> Unit, onDelete: () -> Unit) {
 @Preview(showBackground = true, locale = "pt-rBR")
 @Composable
 fun PreviewTelaDoForm() {
-    Column() {
+    Column {
         Titulo()
         CampoDeNumero("Preço da gasolina (R$)", "5.5", onValueChange = {})
         CampoDeNumero("Preço do álcool (R$)", "4.4", onValueChange = {})
         CampoDeTexto("Nome do posto", "shell da Jovita", onValueChange = {})
         Switch75(true, onCheckedChange = {})
         BotaoAddPosto(onClick = {})
+        Text(
+            "Histórico de Postos",
+            modifier = Modifier.padding(16.dp),
+            fontWeight = FontWeight.ExtraBold
+        )
         val postoPreview = Posto (
             "Shell do Feira Center",
             "6.54",
             "4.54",
-            true
+            true,
+            dataIns = "26/04/2026",
+            lat = 1.21,
+            lon = 2.23
         )
         PostoCard(postoPreview, onClick = {}, onDelete = {})
     }
