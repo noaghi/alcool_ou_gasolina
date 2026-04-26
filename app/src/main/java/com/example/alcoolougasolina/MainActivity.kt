@@ -54,6 +54,7 @@ import com.google.android.gms.location.LocationServices
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import android.location.Location
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.runtime.toMutableStateList
 import androidx.core.app.ActivityCompat
 import androidx.core.content.edit
@@ -73,14 +74,18 @@ class MainActivity : ComponentActivity() {
 
                     val prefs = remember { context.getSharedPreferences("PostoPrefs", MODE_PRIVATE) }
                     val gson = Gson()
-                    val json = prefs.getString("lista_postos", "[]")
                     val tipo = object : TypeToken<MutableList<Posto>>() {}.type
+
+                    val listaDePostos = remember {
+                        val json = prefs.getString("lista_postos", "[]")
+                        val listaInicial = gson.fromJson<List<Posto>>(json, tipo) ?: listOf()
+                        listaInicial.toMutableStateList()
+                    }
 
                     var gasValue by rememberSaveable { mutableStateOf("") }
                     var alcValue by rememberSaveable { mutableStateOf("") }
                     var postoValue by rememberSaveable { mutableStateOf("") }
                     var is75Percent by rememberSaveable { mutableStateOf(prefs.getBoolean("usa_75", false)) }
-                    var dataIns by rememberSaveable { mutableStateOf("") }
 
                     val gas = context.getString(R.string.preco_da_gasolina)
                     val alc = context.getString(R.string.preco_do_alcool)
@@ -90,9 +95,6 @@ class MainActivity : ComponentActivity() {
                     val hdp = context.getString(R.string.historico_de_postos)
                     val editando = context.getString(R.string.editando)
                     val removido = context.getString(R.string.removido)
-
-                    val listaInicial = gson.fromJson<List<Posto>>(json, tipo) ?: listOf()
-                    val listaDePostos = remember { listaInicial.toMutableStateList() }
 
                     Column(
                         modifier = Modifier
@@ -114,12 +116,15 @@ class MainActivity : ComponentActivity() {
                                     val lat = location?.latitude ?: 0.0
                                     val lon = location?.longitude ?: 0.0
 
+                                    val formatter = java.text.SimpleDateFormat("dd/MM/yy HH:mm", java.util.Locale.getDefault())
+                                    val dataFormatada = formatter.format(java.util.Date())
+
                                     val novoPosto = Posto(
                                         nome = postoValue,
                                         gasolina = gasValue,
                                         alcool = alcValue,
                                         usa75 = is75Percent,
-                                        dataIns = dataIns,
+                                        dataIns = dataFormatada,
                                         lat = lat,
                                         lon = lon
                                     )
@@ -153,7 +158,8 @@ class MainActivity : ComponentActivity() {
                         listaDePostos.forEach { posto ->
                             PostoCard(
                                 posto = posto,
-                                onClick = {
+                                onClick = {},
+                                onEdit = {
                                     postoValue = posto.nome
                                     gasValue = posto.gasolina
                                     alcValue = posto.alcool
@@ -280,7 +286,12 @@ fun BotaoAddPosto( onClick: () -> Unit ) {
 }
 
 @Composable
-fun PostoCard(posto: Posto, onClick: () -> Unit, onDelete: () -> Unit) {
+fun PostoCard(
+    posto: Posto
+    , onClick: () -> Unit
+    , onEdit: () -> Unit
+    , onDelete: () -> Unit
+) {
     val context = LocalContext.current
     val baseadoEm = context.getString(R.string.baseado_em)
     val gasP = context.getString(R.string.gasolinaP)
@@ -288,6 +299,7 @@ fun PostoCard(posto: Posto, onClick: () -> Unit, onDelete: () -> Unit) {
     val acg = context.getString(R.string.use_gasolina)
     val acc = context.getString(R.string.use_alcool)
     val di = context.getString(R.string.dados_insuficientes)
+    val editar = context.getString(R.string.editar)
     val excluir = context.getString(R.string.excluir)
 
     val gasV = posto.gasolina.toDouble()
@@ -326,12 +338,21 @@ fun PostoCard(posto: Posto, onClick: () -> Unit, onDelete: () -> Unit) {
                 }
             }
 
-            IconButton(onClick = onDelete) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = excluir,
-                    tint = Color.Red
-                )
+            Column {
+                IconButton(onClick = onEdit) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = editar,
+                        tint = Color.Blue
+                    )
+                }
+                IconButton(onClick = onDelete) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = excluir,
+                        tint = Color.Red
+                    )
+                }
             }
         }
     }
@@ -361,6 +382,6 @@ fun PreviewTelaDoForm() {
             lat = 1.21,
             lon = 2.23
         )
-        PostoCard(postoPreview, onClick = {}, onDelete = {})
+        PostoCard(postoPreview, onClick = {}, onEdit = {}, onDelete = {})
     }
 }

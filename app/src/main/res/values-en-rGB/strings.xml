@@ -18,4 +18,5 @@
     <string name="dados_insuficientes">not enough data</string>
     <string name="excluir">delete</string>
     <string name="adicionar">add gas station</string>
+    <string name="editar">edit</string>
 </resources>

@@ -17,4 +17,5 @@
     <string name="dados_insuficientes">Dados insuficientes</string>
     <string name="excluir">Excluir</string>
     <string name="adicionar">Adicionar posto</string>
+    <string name="editar">Editar</string>
 </resources>
