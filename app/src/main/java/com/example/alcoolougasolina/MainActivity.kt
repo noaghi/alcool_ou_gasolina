@@ -54,10 +54,15 @@ import com.google.android.gms.location.LocationServices
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import android.location.Location
+import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.toMutableStateList
 import androidx.core.app.ActivityCompat
 import androidx.core.content.edit
+import androidx.compose.material3.Surface
 
 class MainActivity : ComponentActivity() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
@@ -87,14 +92,26 @@ class MainActivity : ComponentActivity() {
                     var postoValue by rememberSaveable { mutableStateOf("") }
                     var is75Percent by rememberSaveable { mutableStateOf(prefs.getBoolean("usa_75", false)) }
 
-                    val gas = context.getString(R.string.preco_da_gasolina)
-                    val alc = context.getString(R.string.preco_do_alcool)
-                    val posto = context.getString(R.string.nome_do_posto)
-                    val ptoc = context.getString(R.string.preencha_todos_os_campos)
-                    val pscs = context.getString(R.string.posto_salvo_com_sucesso)
-                    val hdp = context.getString(R.string.historico_de_postos)
-                    val editando = context.getString(R.string.editando)
-                    val removido = context.getString(R.string.removido)
+                    val labels = remember {
+                        mapOf(
+                            "gas" to context.getString(R.string.preco_da_gasolina),
+                            "alc" to context.getString(R.string.preco_do_alcool),
+                            "posto" to context.getString(R.string.nome_do_posto),
+                            "ptoc" to context.getString(R.string.preencha_todos_os_campos),
+                            "pscs" to context.getString(R.string.posto_salvo_com_sucesso),
+                            "hdp" to context.getString(R.string.historico_de_postos),
+                            "editando" to context.getString(R.string.editando),
+                            "removido" to context.getString(R.string.removido),
+                            "baseadoEm" to context.getString(R.string.baseado_em),
+                            "gasP" to context.getString(R.string.gasolinaP),
+                            "alcP" to context.getString(R.string.alcoolP),
+                            "acg" to context.getString(R.string.use_gasolina),
+                            "acc" to context.getString(R.string.use_alcool),
+                            "di" to context.getString(R.string.dados_insuficientes),
+                            "editar" to context.getString(R.string.editar),
+                            "excluir" to context.getString(R.string.excluir)
+                        )
+                    }
 
                     Column(
                         modifier = Modifier
@@ -103,9 +120,9 @@ class MainActivity : ComponentActivity() {
                             .verticalScroll(scrollState)
                     ) {
                         Titulo()
-                        CampoDeNumero(gas, gasValue) { gasValue = it }
-                        CampoDeNumero(alc, alcValue) { alcValue = it }
-                        CampoDeTexto(posto, postoValue) { postoValue = it }
+                        CampoDeNumero(labels["gas"] ?: "", gasValue) { gasValue = it }
+                        CampoDeNumero(labels["alc"] ?: "", alcValue) { alcValue = it }
+                        CampoDeTexto(labels["posto"] ?: "", postoValue) { postoValue = it }
                         Switch75(is75Percent) { novoValor ->
                             is75Percent = novoValor
                             prefs.edit { putBoolean("usa_75", novoValor) }
@@ -136,11 +153,11 @@ class MainActivity : ComponentActivity() {
                                         val novoJson = gson.toJson(listaDePostos.toList())
                                         prefs.edit {putString("lista_postos", novoJson) }
 
-                                        Toast.makeText(context, pscs, Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, labels["pscs"] ?: "", Toast.LENGTH_SHORT).show()
 
                                         postoValue = ""; gasValue = ""; alcValue = ""
                                     } else {
-                                        Toast.makeText(context, ptoc, Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, labels["ptoc"] ?: "", Toast.LENGTH_SHORT).show()
                                     }
                                 }
                             } else {
@@ -150,7 +167,7 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                         Text(
-                            hdp,
+                            labels["hdp"] ?: "",
                             modifier = Modifier.padding(16.dp),
                             fontWeight = FontWeight.ExtraBold
                         )
@@ -158,14 +175,14 @@ class MainActivity : ComponentActivity() {
                         listaDePostos.forEach { posto ->
                             PostoCard(
                                 posto = posto,
-                                onClick = {},
+                                labels = labels,
                                 onEdit = {
                                     postoValue = posto.nome
                                     gasValue = posto.gasolina
                                     alcValue = posto.alcool
                                     is75Percent = posto.usa75
 
-                                    Toast.makeText(context, editando + posto.nome, Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, (labels["editando"] ?: "") + posto.nome, Toast.LENGTH_SHORT).show()
                                 },
                                 onDelete = {
                                     listaDePostos.remove(posto)
@@ -173,7 +190,7 @@ class MainActivity : ComponentActivity() {
                                     val novoJson = gson.toJson(listaDePostos.toList())
                                     prefs.edit { putString("lista_postos", novoJson) }
 
-                                    Toast.makeText(context, posto.nome + removido, Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, posto.nome + (labels["removido"] ?: ""), Toast.LENGTH_SHORT).show()
                                 }
                             )
                         }
@@ -204,14 +221,14 @@ fun Titulo() {
 
 @Composable
 fun CampoDeNumero(nome: String, valor: String, onValueChange: (String) -> Unit) {
-    val decimalRegex = Regex("^\\d*[.,]?\\d*$")
     val maxLength = 4
 
     OutlinedTextField(
         value = valor,
         onValueChange = { novoNum ->
-            if (novoNum.matches(decimalRegex) && novoNum.length <= maxLength) {
-                onValueChange(novoNum.replace(',', '.'))
+            val numTratado = novoNum.replace(',', '.')
+            if (numTratado.matches(Regex("^\\d*\\.?\\d*$")) && numTratado.length <= maxLength) {
+                onValueChange(numTratado)
             }
         },
         label = { Text(nome) },
@@ -247,10 +264,12 @@ fun Switch75(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
+            .fillMaxWidth()
             .padding(16.dp)
+            .clickable { onCheckedChange(!checked) }
     ) {
         Text(
-            modifier = Modifier.padding(end = 8.dp),
+            modifier = Modifier.padding(end = 4.dp),
             text = if (checked) "75%" else "70%"
         )
         Switch(
@@ -287,23 +306,22 @@ fun BotaoAddPosto( onClick: () -> Unit ) {
 
 @Composable
 fun PostoCard(
-    posto: Posto
-    , onClick: () -> Unit
-    , onEdit: () -> Unit
-    , onDelete: () -> Unit
+    posto: Posto,
+    labels: Map<String, String>,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit
 ) {
-    val context = LocalContext.current
-    val baseadoEm = context.getString(R.string.baseado_em)
-    val gasP = context.getString(R.string.gasolinaP)
-    val alcP = context.getString(R.string.alcoolP)
-    val acg = context.getString(R.string.use_gasolina)
-    val acc = context.getString(R.string.use_alcool)
-    val di = context.getString(R.string.dados_insuficientes)
-    val editar = context.getString(R.string.editar)
-    val excluir = context.getString(R.string.excluir)
+    val gasP = labels["gasP"] ?: ""
+    val alcP = labels["alcP"] ?: ""
+    val acc = labels["acc"] ?: ""
+    val acg = labels["acg"] ?: ""
+    val di = labels["di"] ?: ""
+    val baseadoEm = labels["baseadoEm"] ?: ""
+    val editar = labels["editar"] ?: ""
+    val excluir = labels["excluir"] ?: ""
 
-    val gasV = posto.gasolina.toDouble()
-    val alcV = posto.alcool.toDouble()
+    val gasV = posto.gasolina.toDoubleOrNull() ?: 0.0
+    val alcV = posto.alcool.toDoubleOrNull() ?: 0.0
     val resultado = if (gasV > 0) {
         val limite = if (posto.usa75) 0.75 else 0.70
         if ( alcV / gasV <= limite ) acc else acg
@@ -311,24 +329,28 @@ fun PostoCard(
         di
     }
 
+    var expandido by remember {mutableStateOf(true)}
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp)
-            .clickable { onClick() },
+            .animateContentSize()
+            .clickable { expandido = !expandido },
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = posto.nome, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Text(text = posto.nome, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
                 Text(text = "$gasP${posto.gasolina} | $alcP${posto.alcool}")
 
                 Text(
                     text = resultado,
-                    color = if (resultado == acc) Color(0xFF2E7D32) else Color(0xFFC62828),
+                    color = if (resultado == acc) Color(0xFF2E7D32) else Color(0xFFC68728),
                     fontWeight = FontWeight.ExtraBold,
                     modifier = Modifier.padding(top = 4.dp)
                 )
@@ -343,45 +365,78 @@ fun PostoCard(
                     Icon(
                         imageVector = Icons.Default.Edit,
                         contentDescription = editar,
-                        tint = Color.Blue
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 }
                 IconButton(onClick = onDelete) {
                     Icon(
                         imageVector = Icons.Default.Delete,
                         contentDescription = excluir,
-                        tint = Color.Red
+                        tint = MaterialTheme.colorScheme.error
                     )
                 }
+            }
+        }
+        if (expandido) {
+            Column(
+                modifier = Modifier
+                    .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
+                    .fillMaxWidth()
+            ) {
+                HorizontalDivider(modifier = Modifier.padding(bottom = 8.dp))
+                Text("Latitude: ${posto.lat}", style = MaterialTheme.typography.bodyMedium)
+                Text("Longitude: ${posto.lon}", style = MaterialTheme.typography.bodyMedium)
+                Text("Data de cadastro: ${posto.dataIns}", style = MaterialTheme.typography.bodyMedium)
             }
         }
     }
 }
 
-@Preview(showBackground = true, locale = "pt-rBR")
+@Preview(
+    name = "Modo Claro",
+    showBackground = true,
+    locale = "pt"
+)
+@Preview(
+    name = "Modo Escuro",
+    showBackground = true,
+    locale = "pt",
+    uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES
+)
 @Composable
 fun PreviewTelaDoForm() {
-    Column {
-        Titulo()
-        CampoDeNumero("Preço da gasolina (R$)", "5.5", onValueChange = {})
-        CampoDeNumero("Preço do álcool (R$)", "4.4", onValueChange = {})
-        CampoDeTexto("Nome do posto", "shell da Jovita", onValueChange = {})
-        Switch75(true, onCheckedChange = {})
-        BotaoAddPosto(onClick = {})
-        Text(
-            "Histórico de Postos",
-            modifier = Modifier.padding(16.dp),
-            fontWeight = FontWeight.ExtraBold
-        )
-        val postoPreview = Posto (
-            "Shell do Feira Center",
-            "6.54",
-            "4.54",
-            true,
-            dataIns = "26/04/2026",
-            lat = 1.21,
-            lon = 2.23
-        )
-        PostoCard(postoPreview, onClick = {}, onEdit = {}, onDelete = {})
+    AlcoolOuGasolinaTheme {
+        Surface(color = MaterialTheme.colorScheme.background) {
+            Column {
+                Titulo()
+                CampoDeNumero("Preço da gasolina (R$)", "5.5", onValueChange = {})
+                CampoDeNumero("Preço do álcool (R$)", "4.4", onValueChange = {})
+                CampoDeTexto("Nome do posto", "shell da Jovita", onValueChange = {})
+                Switch75(true, onCheckedChange = {})
+                BotaoAddPosto(onClick = {})
+                Text(
+                    "Histórico de Postos",
+                    modifier = Modifier.padding(16.dp),
+                    fontWeight = FontWeight.ExtraBold
+                )
+                val postoPreview = Posto(
+                    "Shell da Zé Bastos",
+                    "6.66",
+                    "4.20",
+                    true,
+                    dataIns = "26/04/2026",
+                    lat = 1.21,
+                    lon = 2.23
+                )
+                val labelsFake = mapOf(
+                    "gasP" to "Gasolina: R$",
+                    "alcP" to "Álcool: R$",
+                    "acc" to "Abasteça com ÁLCOOL",
+                    "acg" to "Abasteça com GASOLINA",
+                    "baseadoEm" to "Cálculo baseado no rendimento de 75%",
+                )
+                PostoCard(postoPreview, labels = labelsFake, onEdit = {}, onDelete = {})
+            }
+        }
     }
 }
