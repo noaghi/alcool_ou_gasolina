@@ -357,7 +357,7 @@ fun PostoCard(
 
     var expandido by rememberSaveable {mutableStateOf(false)}
 
-    var showDeleteDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
 
     val context = LocalContext.current
 
