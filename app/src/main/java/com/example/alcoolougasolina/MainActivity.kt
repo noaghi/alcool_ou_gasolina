@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -40,6 +41,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -110,7 +112,9 @@ class MainActivity : ComponentActivity() {
                             "acc" to context.getString(R.string.use_alcool),
                             "di" to context.getString(R.string.dados_insuficientes),
                             "editar" to context.getString(R.string.editar),
-                            "excluir" to context.getString(R.string.excluir)
+                            "excluir" to context.getString(R.string.excluir),
+                            "confirmar_exclusao" to context.getString(R.string.confirmar_exclusão),
+                            "cancelar" to context.getString(R.string.cancelar)
                         )
                     }
 
@@ -339,6 +343,8 @@ fun PostoCard(
     val baseadoEm = labels["baseadoEm"] ?: ""
     val editar = labels["editar"] ?: ""
     val excluir = labels["excluir"] ?: ""
+    val confirmarExclusao = labels["confirmar_exclusao"] ?: ""
+    val cancelar = labels["cancelar"] ?: ""
 
     val gasV = posto.gasolina.toDoubleOrNull() ?: 0.0
     val alcV = posto.alcool.toDoubleOrNull() ?: 0.0
@@ -350,6 +356,8 @@ fun PostoCard(
     }
 
     var expandido by rememberSaveable {mutableStateOf(false)}
+
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
 
@@ -401,7 +409,7 @@ fun PostoCard(
                         tint = MaterialTheme.colorScheme.primary
                     )
                 }
-                IconButton(onClick = onDelete) {
+                IconButton(onClick = { showDeleteDialog = true } ) {
                     Icon(
                         imageVector = Icons.Default.Delete,
                         contentDescription = excluir,
@@ -436,6 +444,29 @@ fun PostoCard(
                     }
                 }
             }
+        }
+
+        if (showDeleteDialog) {
+            AlertDialog(
+                onDismissRequest = { showDeleteDialog = false },
+                title = { Text(confirmarExclusao) },
+                text = { Text(confirmarExclusao) },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            onDelete()
+                            showDeleteDialog = false
+                        }
+                    ) {
+                        Text(excluir, color = MaterialTheme.colorScheme.error)
+                    }
+                },
+                dismissButton = {
+                    TextButton( onClick = { showDeleteDialog = false }) {
+                        Text(cancelar)
+                    }
+                }
+            )
         }
     }
 }

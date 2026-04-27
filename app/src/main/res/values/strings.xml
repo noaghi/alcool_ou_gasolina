@@ -7,7 +7,7 @@
     <string name="posto_salvo_com_sucesso">Posto salvo com sucesso!</string>
     <string name="historico_de_postos">Histórico de postos</string>
     <string name="editando">"Editando: "</string>
-    <string name="removido">" removido"</string>
+    <string name="removido">"  removido"</string>
     <string name="baseado_em">Cálculo baseado no rendimento de 75%</string>
     <string name="gasolinaP">Gasolina: R$</string>
     <string name="alcoolP">Álcool: R$</string>
@@ -18,4 +18,6 @@
     <string name="excluir">Excluir</string>
     <string name="adicionar">Adicionar posto</string>
     <string name="editar">Editar</string>
+    <string name="confirmar_exclusão">Tem certeza que deseja excluir este posto? Esta ação não pode ser desfeita.</string>
+    <string name="cancelar">Cancelar</string>
 </resources>
