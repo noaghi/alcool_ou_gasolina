@@ -20,4 +20,5 @@
     <string name="editar">Editar</string>
     <string name="confirmar_exclusão">Tem certeza que deseja excluir este posto? Esta ação não pode ser desfeita.</string>
     <string name="cancelar">Cancelar</string>
+    <string name="data_de_cadastro">"Data de cadastro: "</string>
 </resources>

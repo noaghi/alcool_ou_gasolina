@@ -114,7 +114,8 @@ class MainActivity : ComponentActivity() {
                             "editar" to context.getString(R.string.editar),
                             "excluir" to context.getString(R.string.excluir),
                             "confirmar_exclusao" to context.getString(R.string.confirmar_exclusão),
-                            "cancelar" to context.getString(R.string.cancelar)
+                            "cancelar" to context.getString(R.string.cancelar),
+                            "data_de_cadastro" to context.getString(R.string.data_de_cadastro)
                         )
                     }
 
@@ -340,6 +341,7 @@ fun PostoCard(
     val acc = labels["acc"] ?: ""
     val acg = labels["acg"] ?: ""
     val di = labels["di"] ?: ""
+    val dataDeCadastro = labels["data_de_cadastro"] ?: ""
     val baseadoEm = labels["baseadoEm"] ?: ""
     val editar = labels["editar"] ?: ""
     val excluir = labels["excluir"] ?: ""
@@ -429,7 +431,7 @@ fun PostoCard(
                 ) {
                     Text("Latitude: ${posto.lat}", style = MaterialTheme.typography.bodyMedium)
                     Text("Longitude: ${posto.lon}", style = MaterialTheme.typography.bodyMedium)
-                    Text("Data de cadastro: ${posto.dataIns}", style = MaterialTheme.typography.bodyMedium)
+                    Text(dataDeCadastro + posto.dataIns, style = MaterialTheme.typography.bodyMedium)
                 }
                 Column(
                     modifier = Modifier
@@ -449,7 +451,7 @@ fun PostoCard(
         if (showDeleteDialog) {
             AlertDialog(
                 onDismissRequest = { showDeleteDialog = false },
-                title = { Text(confirmarExclusao) },
+                title = { Text(excluir) },
                 text = { Text(confirmarExclusao) },
                 confirmButton = {
                     TextButton(
