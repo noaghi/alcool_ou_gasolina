@@ -2,6 +2,7 @@ package com.example.alcoolougasolina
 
 import android.Manifest
 import android.app.Activity
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.Toast
@@ -56,13 +57,18 @@ import com.google.gson.reflect.TypeToken
 import android.location.Location
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.toMutableStateList
 import androidx.core.app.ActivityCompat
 import androidx.core.content.edit
 import androidx.compose.material3.Surface
+import androidx.core.net.toUri
 
 class MainActivity : ComponentActivity() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
@@ -73,8 +79,6 @@ class MainActivity : ComponentActivity() {
         setContent {
             AlcoolOuGasolinaTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    val scrollState = rememberScrollState()
-
                     val context = LocalContext.current
 
                     val prefs = remember { context.getSharedPreferences("PostoPrefs", MODE_PRIVATE) }
@@ -113,66 +117,85 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(innerPadding)
-                            .verticalScroll(scrollState)
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = innerPadding
                     ) {
-                        Titulo()
-                        CampoDeNumero(labels["gas"] ?: "", gasValue) { gasValue = it }
-                        CampoDeNumero(labels["alc"] ?: "", alcValue) { alcValue = it }
-                        CampoDeTexto(labels["posto"] ?: "", postoValue) { postoValue = it }
-                        Switch75(is75Percent) { novoValor ->
-                            is75Percent = novoValor
-                            prefs.edit { putBoolean("usa_75", novoValor) }
-                        }
-                        BotaoAddPosto {
-                            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                                fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
-                                    val lat = location?.latitude ?: 0.0
-                                    val lon = location?.longitude ?: 0.0
+                        item {
+                            Titulo()
+                            CampoDeNumero(labels["gas"] ?: "", gasValue) { gasValue = it }
+                            CampoDeNumero(labels["alc"] ?: "", alcValue) { alcValue = it }
+                            CampoDeTexto(labels["posto"] ?: "", postoValue) { postoValue = it }
+                            Switch75(is75Percent) { novoValor ->
+                                is75Percent = novoValor
+                                prefs.edit { putBoolean("usa_75", novoValor) }
+                            }
+                            BotaoAddPosto {
+                                if (ActivityCompat.checkSelfPermission(
+                                        context,
+                                        Manifest.permission.ACCESS_FINE_LOCATION
+                                    ) == PackageManager.PERMISSION_GRANTED
+                                ) {
+                                    fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
+                                        val lat = location?.latitude ?: 0.0
+                                        val lon = location?.longitude ?: 0.0
 
-                                    val formatter = java.text.SimpleDateFormat("dd/MM/yy HH:mm", java.util.Locale.getDefault())
-                                    val dataFormatada = formatter.format(java.util.Date())
+                                        val formatter = java.text.SimpleDateFormat(
+                                            "dd/MM/yy HH:mm",
+                                            java.util.Locale.getDefault()
+                                        )
+                                        val dataFormatada = formatter.format(java.util.Date())
 
-                                    val novoPosto = Posto(
-                                        nome = postoValue,
-                                        gasolina = gasValue,
-                                        alcool = alcValue,
-                                        usa75 = is75Percent,
-                                        dataIns = dataFormatada,
-                                        lat = lat,
-                                        lon = lon
-                                    )
+                                        val novoPosto = Posto(
+                                            nome = postoValue,
+                                            gasolina = gasValue,
+                                            alcool = alcValue,
+                                            usa75 = is75Percent,
+                                            dataIns = dataFormatada,
+                                            lat = lat,
+                                            lon = lon
+                                        )
 
-                                    if (postoValue.isNotBlank() && gasValue.isNotBlank() && alcValue.isNotBlank()) {
-                                        listaDePostos.removeAll { it.nome == postoValue }
-                                        listaDePostos.add(novoPosto)
+                                        if (postoValue.isNotBlank() && gasValue.isNotBlank() && alcValue.isNotBlank()) {
+                                            listaDePostos.removeAll { it.nome == postoValue }
+                                            listaDePostos.add(novoPosto)
 
-                                        val novoJson = gson.toJson(listaDePostos.toList())
-                                        prefs.edit {putString("lista_postos", novoJson) }
+                                            val novoJson = gson.toJson(listaDePostos.toList())
+                                            prefs.edit { putString("lista_postos", novoJson) }
 
-                                        Toast.makeText(context, labels["pscs"] ?: "", Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(
+                                                context,
+                                                labels["pscs"] ?: "",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
 
-                                        postoValue = ""; gasValue = ""; alcValue = ""
-                                    } else {
-                                        Toast.makeText(context, labels["ptoc"] ?: "", Toast.LENGTH_SHORT).show()
+                                            postoValue = ""; gasValue = ""; alcValue = ""
+                                        } else {
+                                            Toast.makeText(
+                                                context,
+                                                labels["ptoc"] ?: "",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                    }
+                                } else {
+                                    (context as? Activity)?.let {
+                                        ActivityCompat.requestPermissions(
+                                            it,
+                                            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                                            1
+                                        )
                                     }
                                 }
-                            } else {
-                                (context as? Activity)?.let {
-                                    ActivityCompat.requestPermissions(it, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1)
-                                }
                             }
+                            Text(
+                                labels["hdp"] ?: "",
+                                modifier = Modifier.padding(16.dp),
+                                fontWeight = FontWeight.ExtraBold
+                            )
                         }
-                        Text(
-                            labels["hdp"] ?: "",
-                            modifier = Modifier.padding(16.dp),
-                            fontWeight = FontWeight.ExtraBold
-                        )
 
-                        listaDePostos.forEach { posto ->
+                        items(listaDePostos) { posto ->
                             PostoCard(
                                 posto = posto,
                                 labels = labels,
@@ -329,7 +352,20 @@ fun PostoCard(
         di
     }
 
-    var expandido by remember {mutableStateOf(true)}
+    var expandido by remember {mutableStateOf(false)}
+
+    val context = LocalContext.current
+
+    val abrirMapa = {
+        val uri = "geo:${posto.lat}, ${posto.lon}?q=${posto.lat}, ${posto.lon}(${posto.nome})".toUri()
+        val intent = Intent(Intent.ACTION_VIEW, uri)
+
+        try {
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            Toast.makeText(context, "Nenhum aplicativo de mapa encontrado.", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     Card(
         modifier = Modifier
@@ -378,15 +414,30 @@ fun PostoCard(
             }
         }
         if (expandido) {
-            Column(
-                modifier = Modifier
-                    .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
-                    .fillMaxWidth()
-            ) {
-                HorizontalDivider(modifier = Modifier.padding(bottom = 8.dp))
-                Text("Latitude: ${posto.lat}", style = MaterialTheme.typography.bodyMedium)
-                Text("Longitude: ${posto.lon}", style = MaterialTheme.typography.bodyMedium)
-                Text("Data de cadastro: ${posto.dataIns}", style = MaterialTheme.typography.bodyMedium)
+            HorizontalDivider(modifier = Modifier.padding(start = 12.dp, end = 12.dp, bottom = 8.dp))
+            Row() {
+                Column(
+                    modifier = Modifier
+                        .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
+                        .fillMaxWidth()
+                        .weight(1f)
+                ) {
+                    Text("Latitude: ${posto.lat}", style = MaterialTheme.typography.bodyMedium)
+                    Text("Longitude: ${posto.lon}", style = MaterialTheme.typography.bodyMedium)
+                    Text("Data de cadastro: ${posto.dataIns}", style = MaterialTheme.typography.bodyMedium)
+                }
+                Column(
+                    modifier = Modifier
+                        .padding(16.dp)
+                ) {
+                    IconButton(onClick = abrirMapa) {
+                        Icon(
+                            imageVector = Icons.Default.LocationOn,
+                            contentDescription = "Abrir no mapa",
+                            tint = MaterialTheme.colorScheme.secondary
+                        )
+                    }
+                }
             }
         }
     }
