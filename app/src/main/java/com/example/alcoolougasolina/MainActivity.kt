@@ -12,6 +12,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -379,6 +380,11 @@ fun PostoCard(
         }
     }
 
+    val isDark = isSystemInDarkTheme()
+    val corAlc = if (isDark) Color(0xFF81C784) else Color(0xFF1B5E20)
+    val corGas = if (isDark) Color(0xFFFFB74D) else Color(0xFF563600)
+    val corRen = if (isDark) Color(0xFFE0E0E2) else Color(0xFF545456)
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -402,13 +408,13 @@ fun PostoCard(
 
                 Text(
                     text = resultado,
-                    color = if (resultado == acc) Color(0xFF1B5E20) else Color(0xFF563600),
+                    color = if (resultado == acc) corAlc else corGas,
                     fontWeight = FontWeight.ExtraBold,
                     modifier = Modifier.padding(top = 4.dp)
                 )
 
                 if (posto.usa75) {
-                    Text(text = baseadoEm, fontSize = 12.sp, color = Color(0xFF545456))
+                    Text(text = baseadoEm, fontSize = 12.sp, color = corRen)
                 }
             }
 
