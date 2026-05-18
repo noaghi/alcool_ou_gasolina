@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -317,7 +318,11 @@ fun BotaoAddPosto( onClick: () -> Unit ) {
     ) {
         Button(
             onClick = onClick,
-            modifier = Modifier.height(56.dp)
+            modifier = Modifier.height(56.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF0052CC),
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            )
         ) {
             Icon(
                 imageVector = Icons.Default.Add,
@@ -380,7 +385,11 @@ fun PostoCard(
             .padding(8.dp)
             .animateContentSize()
             .clickable { expandido = !expandido },
-        elevation = CardDefaults.cardElevation(4.dp)
+        elevation = CardDefaults.cardElevation(4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -393,13 +402,13 @@ fun PostoCard(
 
                 Text(
                     text = resultado,
-                    color = if (resultado == acc) Color(0xFF2E7D32) else Color(0xFFC68728),
+                    color = if (resultado == acc) Color(0xFF1B5E20) else Color(0xFF563600),
                     fontWeight = FontWeight.ExtraBold,
                     modifier = Modifier.padding(top = 4.dp)
                 )
 
                 if (posto.usa75) {
-                    Text(text = baseadoEm, fontSize = 12.sp, color = Color.Gray)
+                    Text(text = baseadoEm, fontSize = 12.sp, color = Color(0xFF545456))
                 }
             }
 
